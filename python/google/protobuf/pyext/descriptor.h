@@ -1,41 +1,19 @@
 // Protocol Buffers - Google's data interchange format
 // Copyright 2008 Google Inc.  All rights reserved.
-// https://developers.google.com/protocol-buffers/
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-//     * Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//     * Redistributions in binary form must reproduce the above
-// copyright notice, this list of conditions and the following disclaimer
-// in the documentation and/or other materials provided with the
-// distribution.
-//     * Neither the name of Google Inc. nor the names of its
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file or at
+// https://developers.google.com/open-source/licenses/bsd
 
 // Author: petar@google.com (Petar Petrov)
 
 #ifndef GOOGLE_PROTOBUF_PYTHON_CPP_DESCRIPTOR_H__
 #define GOOGLE_PROTOBUF_PYTHON_CPP_DESCRIPTOR_H__
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include <google/protobuf/descriptor.h>
+#include "google/protobuf/descriptor.h"
 
 namespace google {
 namespace protobuf {
@@ -47,6 +25,8 @@ extern PyTypeObject PyEnumDescriptor_Type;
 extern PyTypeObject PyEnumValueDescriptor_Type;
 extern PyTypeObject PyFileDescriptor_Type;
 extern PyTypeObject PyOneofDescriptor_Type;
+extern PyTypeObject PyServiceDescriptor_Type;
+extern PyTypeObject PyMethodDescriptor_Type;
 
 // Wraps a Descriptor in a Python object.
 // The C++ pointer is usually borrowed from the global DescriptorPool.
@@ -60,6 +40,10 @@ PyObject* PyEnumValueDescriptor_FromDescriptor(
 PyObject* PyOneofDescriptor_FromDescriptor(const OneofDescriptor* descriptor);
 PyObject* PyFileDescriptor_FromDescriptor(
     const FileDescriptor* file_descriptor);
+PyObject* PyServiceDescriptor_FromDescriptor(
+    const ServiceDescriptor* descriptor);
+PyObject* PyMethodDescriptor_FromDescriptor(
+    const MethodDescriptor* descriptor);
 
 // Alternate constructor of PyFileDescriptor, used when we already have a
 // serialized FileDescriptorProto that can be cached.
@@ -74,6 +58,7 @@ const Descriptor* PyMessageDescriptor_AsDescriptor(PyObject* obj);
 const FieldDescriptor* PyFieldDescriptor_AsDescriptor(PyObject* obj);
 const EnumDescriptor* PyEnumDescriptor_AsDescriptor(PyObject* obj);
 const FileDescriptor* PyFileDescriptor_AsDescriptor(PyObject* obj);
+const ServiceDescriptor* PyServiceDescriptor_AsDescriptor(PyObject* obj);
 
 // Returns the raw C++ pointer.
 const void* PyDescriptor_AsVoidPtr(PyObject* obj);
@@ -92,6 +77,6 @@ bool InitDescriptor();
 
 }  // namespace python
 }  // namespace protobuf
-
 }  // namespace google
+
 #endif  // GOOGLE_PROTOBUF_PYTHON_CPP_DESCRIPTOR_H__

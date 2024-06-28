@@ -1,32 +1,9 @@
 # Protocol Buffers - Google's data interchange format
 # Copyright 2008 Google Inc.  All rights reserved.
-# https://developers.google.com/protocol-buffers/
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
-#
-#     * Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above
-# copyright notice, this list of conditions and the following disclaimer
-# in the documentation and/or other materials provided with the
-# distribution.
-#     * Neither the name of Google Inc. nor the names of its
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
 
 """Utilities for Python proto2 tests.
 
@@ -36,17 +13,28 @@ This is intentionally modeled on C++ code in
 
 __author__ = 'robinson@google.com (Will Robinson)'
 
+import importlib.resources
+import numbers
+import operator
 import os.path
 
+from google.protobuf import testdata
 from google.protobuf import unittest_import_pb2
 from google.protobuf import unittest_pb2
-from google.protobuf import descriptor_pb2
 
-# Tests whether the given TestAllTypes message is proto2 or not.
+try:
+  long        # Python 2
+except NameError:
+  long = int  # Python 3
+
+
+# Tests whether the given TestAllTypes message is
+# protobuf_unittest.TestAllTypes or not.
 # This is used to gate several fields/features that only exist
-# for the proto2 version of the message.
+# for the protobuf_unittest version of the message.
 def IsProto2(message):
-  return message.DESCRIPTOR.syntax == "proto2"
+  return message.DESCRIPTOR.full_name == 'protobuf_unittest.TestAllTypes'
+
 
 def SetAllNonLazyFields(message):
   """Sets every non-lazy field in the message to a unique value.
@@ -125,22 +113,37 @@ def SetAllNonLazyFields(message):
   message.repeated_string_piece.append(u'224')
   message.repeated_cord.append(u'225')
 
-  # Add a second one of each field.
-  message.repeated_int32.append(301)
-  message.repeated_int64.append(302)
-  message.repeated_uint32.append(303)
-  message.repeated_uint64.append(304)
-  message.repeated_sint32.append(305)
-  message.repeated_sint64.append(306)
-  message.repeated_fixed32.append(307)
-  message.repeated_fixed64.append(308)
-  message.repeated_sfixed32.append(309)
-  message.repeated_sfixed64.append(310)
-  message.repeated_float.append(311)
-  message.repeated_double.append(312)
-  message.repeated_bool.append(False)
-  message.repeated_string.append(u'315')
-  message.repeated_bytes.append(b'316')
+  # Add a second one of each field and set value by index.
+  message.repeated_int32.append(0)
+  message.repeated_int64.append(0)
+  message.repeated_uint32.append(0)
+  message.repeated_uint64.append(0)
+  message.repeated_sint32.append(0)
+  message.repeated_sint64.append(0)
+  message.repeated_fixed32.append(0)
+  message.repeated_fixed64.append(0)
+  message.repeated_sfixed32.append(0)
+  message.repeated_sfixed64.append(0)
+  message.repeated_float.append(0)
+  message.repeated_double.append(0)
+  message.repeated_bool.append(True)
+  message.repeated_string.append(u'0')
+  message.repeated_bytes.append(b'0')
+  message.repeated_int32[1] = 301
+  message.repeated_int64[1] = 302
+  message.repeated_uint32[1] = 303
+  message.repeated_uint64[1] = 304
+  message.repeated_sint32[1] = 305
+  message.repeated_sint64[1] = 306
+  message.repeated_fixed32[1] = 307
+  message.repeated_fixed64[1] = 308
+  message.repeated_sfixed32[1] = 309
+  message.repeated_sfixed64[1] = 310
+  message.repeated_float[1] = 311
+  message.repeated_double[1] = 312
+  message.repeated_bool[1] = False
+  message.repeated_string[1] = u'315'
+  message.repeated_bytes[1] = b'316'
 
   if IsProto2(message):
     message.repeatedgroup.add().a = 317
@@ -149,7 +152,8 @@ def SetAllNonLazyFields(message):
   message.repeated_import_message.add().d = 320
   message.repeated_lazy_message.add().bb = 327
 
-  message.repeated_nested_enum.append(unittest_pb2.TestAllTypes.BAZ)
+  message.repeated_nested_enum.append(unittest_pb2.TestAllTypes.BAR)
+  message.repeated_nested_enum[1] = unittest_pb2.TestAllTypes.BAZ
   message.repeated_foreign_enum.append(unittest_pb2.FOREIGN_BAZ)
   if IsProto2(message):
     message.repeated_import_enum.append(unittest_import_pb2.IMPORT_BAZ)
@@ -194,6 +198,7 @@ def SetAllNonLazyFields(message):
 def SetAllFields(message):
   SetAllNonLazyFields(message)
   message.optional_lazy_message.bb = 127
+  message.optional_unverified_lazy_message.bb = 128
 
 
 def SetAllExtensions(message):
@@ -233,6 +238,7 @@ def SetAllExtensions(message):
   extensions[pb2.optional_import_message_extension].d = 120
   extensions[pb2.optional_public_import_message_extension].e = 126
   extensions[pb2.optional_lazy_message_extension].bb = 127
+  extensions[pb2.optional_unverified_lazy_message_extension].bb = 128
 
   extensions[pb2.optional_nested_enum_extension] = pb2.TestAllTypes.BAZ
   extensions[pb2.optional_nested_enum_extension] = pb2.TestAllTypes.BAZ
@@ -441,6 +447,7 @@ def ExpectAllFieldsSet(test_case, message):
   test_case.assertEqual(120, message.optional_import_message.d)
   test_case.assertEqual(126, message.optional_public_import_message.e)
   test_case.assertEqual(127, message.optional_lazy_message.bb)
+  test_case.assertEqual(128, message.optional_unverified_lazy_message.bb)
 
   test_case.assertEqual(unittest_pb2.TestAllTypes.BAZ,
                         message.optional_nested_enum)
@@ -602,13 +609,21 @@ def GoldenFile(filename):
       return open(full_path, 'rb')
     path = os.path.join(path, '..')
 
-  # Search internally.
-  path = '.'
-  full_path = os.path.join(path, 'third_party/py/google/protobuf/testdata',
-                           filename)
+  # Search for cross-repo path.
+  full_path = os.path.join(
+      'external/com_google_protobuf/src/google/protobuf/testdata', filename
+  )
   if os.path.exists(full_path):
     # Found it.  Load the golden file from the testdata directory.
     return open(full_path, 'rb')
+
+  try:
+    full_path = importlib.resources.files(testdata) / filename
+    if os.path.exists(full_path):
+      return open(full_path, 'rb')
+  except AttributeError:
+    # Fallback for Python < 3.9
+    return importlib.resources.open_binary(testdata, filename)
 
   raise RuntimeError(
       'Could not find golden files.  This test must be run from within the '
@@ -692,3 +707,153 @@ def SetAllUnpackedFields(message):
   message.unpacked_bool.extend([True, False])
   message.unpacked_enum.extend([unittest_pb2.FOREIGN_BAR,
                                 unittest_pb2.FOREIGN_BAZ])
+
+
+class NonStandardInteger(numbers.Integral):
+  """An integer object that does not subclass int.
+
+  This is used to verify that both C++ and regular proto systems can handle
+  integer others than int and long and that they handle them in predictable
+  ways.
+
+  NonStandardInteger is the minimal legal specification for a custom Integral.
+  As such, it does not support 0 < x < 5 and it is not hashable.
+
+  Note: This is added here instead of relying on numpy or a similar library
+  with custom integers to limit dependencies.
+  """
+
+  def __init__(self, val, error_string_on_conversion=None):
+    assert isinstance(val, numbers.Integral)
+    if isinstance(val, NonStandardInteger):
+      val = val.val
+    self.val = val
+    self.error_string_on_conversion = error_string_on_conversion
+
+  def __long__(self):
+    if self.error_string_on_conversion:
+      raise RuntimeError(self.error_string_on_conversion)
+    return long(self.val)
+
+  def __abs__(self):
+    return NonStandardInteger(operator.abs(self.val))
+
+  def __add__(self, y):
+    return NonStandardInteger(operator.add(self.val, y))
+
+  def __div__(self, y):
+    return NonStandardInteger(operator.div(self.val, y))
+
+  def __eq__(self, y):
+    return operator.eq(self.val, y)
+
+  def __floordiv__(self, y):
+    return NonStandardInteger(operator.floordiv(self.val, y))
+
+  def __truediv__(self, y):
+    return NonStandardInteger(operator.truediv(self.val, y))
+
+  def __invert__(self):
+    return NonStandardInteger(operator.invert(self.val))
+
+  def __mod__(self, y):
+    return NonStandardInteger(operator.mod(self.val, y))
+
+  def __mul__(self, y):
+    return NonStandardInteger(operator.mul(self.val, y))
+
+  def __neg__(self):
+    return NonStandardInteger(operator.neg(self.val))
+
+  def __pos__(self):
+    return NonStandardInteger(operator.pos(self.val))
+
+  def __pow__(self, y):
+    return NonStandardInteger(operator.pow(self.val, y))
+
+  def __trunc__(self):
+    return int(self.val)
+
+  def __radd__(self, y):
+    return NonStandardInteger(operator.add(y, self.val))
+
+  def __rdiv__(self, y):
+    return NonStandardInteger(operator.div(y, self.val))
+
+  def __rmod__(self, y):
+    return NonStandardInteger(operator.mod(y, self.val))
+
+  def __rmul__(self, y):
+    return NonStandardInteger(operator.mul(y, self.val))
+
+  def __rpow__(self, y):
+    return NonStandardInteger(operator.pow(y, self.val))
+
+  def __rfloordiv__(self, y):
+    return NonStandardInteger(operator.floordiv(y, self.val))
+
+  def __rtruediv__(self, y):
+    return NonStandardInteger(operator.truediv(y, self.val))
+
+  def __lshift__(self, y):
+    return NonStandardInteger(operator.lshift(self.val, y))
+
+  def __rshift__(self, y):
+    return NonStandardInteger(operator.rshift(self.val, y))
+
+  def __rlshift__(self, y):
+    return NonStandardInteger(operator.lshift(y, self.val))
+
+  def __rrshift__(self, y):
+    return NonStandardInteger(operator.rshift(y, self.val))
+
+  def __le__(self, y):
+    if isinstance(y, NonStandardInteger):
+      y = y.val
+    return operator.le(self.val, y)
+
+  def __lt__(self, y):
+    if isinstance(y, NonStandardInteger):
+      y = y.val
+    return operator.lt(self.val, y)
+
+  def __and__(self, y):
+    return NonStandardInteger(operator.and_(self.val, y))
+
+  def __or__(self, y):
+    return NonStandardInteger(operator.or_(self.val, y))
+
+  def __xor__(self, y):
+    return NonStandardInteger(operator.xor(self.val, y))
+
+  def __rand__(self, y):
+    return NonStandardInteger(operator.and_(y, self.val))
+
+  def __ror__(self, y):
+    return NonStandardInteger(operator.or_(y, self.val))
+
+  def __rxor__(self, y):
+    return NonStandardInteger(operator.xor(y, self.val))
+
+  def __bool__(self):
+    return self.val
+
+  def __nonzero__(self):
+    return self.val
+
+  def __ceil__(self):
+    return self
+
+  def __floor__(self):
+    return self
+
+  def __int__(self):
+    if self.error_string_on_conversion:
+      raise RuntimeError(self.error_string_on_conversion)
+    return int(self.val)
+
+  def __round__(self):
+    return self
+
+  def __repr__(self):
+    return 'NonStandardInteger(%s)' % self.val
